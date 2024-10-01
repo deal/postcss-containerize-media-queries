@@ -1,3 +1,3 @@
 # `postcss-containerize-media-queries`
 
-PostCSS plugin to safely convert CSS media queries to container queries.
+A PostCSS plugin that converts standard media queries to container queries, while maintaining backwards compatibility.

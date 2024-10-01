@@ -1,7 +1,7 @@
 {
   "name": "@deal/postcss-containerize-media-queries",
   "version": "1.0.0",
-  "description": "PostCSS plugin to safely convert CSS media queries to container queries",
+  "description": "A PostCSS plugin that converts standard media queries to container queries, while maintaining backwards compatibility",
   "main": "cjs/index.js",
   "module": "es/index.js",
   "scripts": {
