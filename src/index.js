@@ -39,29 +39,31 @@ module.exports = postcss.plugin('postcss-containerize-media-queries', (options =
 
   return (root) => {
     // Iterate through all @media rules in the CSS code
-    root.walkAtRules('media', (atRule) => {
-      const params = atRule.params.trim()
+    root.walkAtRules('media', (rule) => {
+      const params = rule.params.trim()
       const mediaQueryValue = Object.keys(mediaQueries).find((key) => mediaQueries[key] === params)
 
       if (mediaQueryValue) {
-        const parent = atRule.parent
+        const parent = rule.parent
         // Create a new @container rule that's a copy of the @media rule
         const containerRule = postcss.atRule({
           name: 'container',
           params: mediaQueryValue,
         })
-        containerRule.append(atRule.nodes)
+        containerRule.append(rule.nodes)
 
         // Create a fallback that duplicates the @media rule only if @container rules are not supported
         const fallbackRule = postcss.atRule({
           name: 'supports',
           params: 'not (contain: inline-size)',
         })
-        fallbackRule.append(atRule.clone())
+        fallbackRule.append(rule.clone())
 
-        parent.insertAfter(atRule, fallbackRule)
-        parent.insertAfter(fallbackRule, containerRule)
-        atRule.remove()
+        if (parent) {
+          parent.insertAfter(rule, fallbackRule)
+          parent.insertAfter(fallbackRule, containerRule)
+          rule.remove()
+        }
       }
     })
   }
