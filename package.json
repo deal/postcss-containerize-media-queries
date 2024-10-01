@@ -1,10 +1,9 @@
 {
-  "name": "@deal/PACKAGE_NAME",
+  "name": "@deal/postcss-containerize-media-queries",
   "version": "1.0.0",
-  "description": "PACKAGE_DESCRIPTION",
+  "description": "PostCSS plugin to safely convert CSS media queries to container queries",
   "main": "cjs/index.js",
   "module": "es/index.js",
-  "typings": "es/index.d.ts",
   "scripts": {
     "postinstall": "husky install",
     "build": "rollup --config && cp package.json dist/",
@@ -14,13 +13,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deal/PACKAGE_REPO.git"
+    "url": "git+https://github.com/deal/postcss-containerize-media-queries.git"
   },
   "license": "UNLICENSED",
   "bugs": {
-    "url": "https://github.com/deal/PACKAGE_REPO/issues"
+    "url": "https://github.com/deal/postcss-containerize-media-queries/issues"
   },
-  "homepage": "https://github.com/deal/PACKAGE_REPO#readme",
+  "homepage": "https://github.com/deal/postcss-containerize-media-queries#readme",
   "devDependencies": {
     "@commitlint/cli": "^8.1.0",
     "@commitlint/config-conventional": "^8.1.0",
@@ -29,10 +28,10 @@
     "husky": "^8.0.1",
     "pinst": "^3.0.0",
     "rollup": "^2.33.3",
-    "rollup-plugin-typescript2": "^0.29.0",
     "semantic-release": "^17.3.0",
-    "typescript": "^3.9.7",
     "yalc": "^1.0.0-pre.53"
   },
-  "dependencies": {}
+  "dependencies": {
+    "postcss": "^8.3.5"
+  }
 }

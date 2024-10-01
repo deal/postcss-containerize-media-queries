@@ -1,8 +1,7 @@
 import pkg from './package.json'
-import typescript from 'rollup-plugin-typescript2'
 
 export default {
-  input: 'src/index.ts',
+  input: 'src/index.js',
   output: [
     {
       dir: 'dist/cjs',
@@ -17,5 +16,4 @@ export default {
   ],
   preserveModules: true,
   external: Object.keys(pkg.dependencies || {}),
-  plugins: [typescript({ clean: true })],
 }
