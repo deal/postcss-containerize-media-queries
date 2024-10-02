@@ -40,11 +40,11 @@ module.exports = (_opts = {}) => {
   return {
     postcssPlugin: 'postcss-containerize-media-queries',
     prepare() {
-      const transformedNodes = new WeakSet()
+      const transformedAtRules = new WeakSet()
       return {
         postcssPlugin: this.postcssPlugin,
         AtRule: (atRule) => {
-          if (transformedNodes.has(atRule)) {
+          if (transformedAtRules.has(atRule)) {
             return
           }
           if (atRule.name.toLowerCase() !== 'media') {
@@ -66,10 +66,10 @@ module.exports = (_opts = {}) => {
             name: 'supports',
             params: 'not (contain: inline-size)',
           })
-          transformedNodes.add(atRule)
+          transformedAtRules.add(atRule)
           fallbackRule.append(atRule.clone())
 
-          // Create a new @container rule that's a copy of the @media rule
+          // Create a new @container rule that replaces the @media rule
           const containerRule = postcss.atRule({
             name: 'container',
             params: params,
