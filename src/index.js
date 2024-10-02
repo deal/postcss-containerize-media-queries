@@ -1,4 +1,5 @@
 const postcss = require('postcss')
+const snakeCase = require('lodash/snakeCase')
 
 const breakpoints = {
   breakpointXs: '360px',
@@ -64,23 +65,25 @@ module.exports = (_opts = {}) => {
             return
           }
           const params = atRule.params.trim()
-          if (
-            !Object.keys(mediaQueries).some((key) => params === key || params === mediaQueries[key])
-          ) {
+          const containerRuleParams = Object.entries(mediaQueries)
+            .find(([key, value]) => {
+              return params === value || params.includes(key) || params.includes(snakeCase(key))
+            })
+            ?.at(1)
+          if (!containerRuleParams) {
             return
           }
-          // Create a fallback that duplicates the @media rule only if @container rules are not supported
+          transformedAtRules.add(atRule)
+          // Create a fallback @supports rule that wraps the original @media rule
           const fallbackRule = postcss.atRule({
             name: 'supports',
             params: 'not (contain: inline-size)',
           })
-          transformedAtRules.add(atRule)
           fallbackRule.append(atRule.clone())
-
-          // Create a new @container rule that replaces the @media rule
+          // Create a @container rule to replace the @media rule
           const containerRule = postcss.atRule({
             name: 'container',
-            params: params,
+            params: containerRuleParams,
           })
           containerRule.append(atRule.nodes)
 
