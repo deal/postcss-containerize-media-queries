@@ -34,6 +34,12 @@ const mediaQueries = {
   bluxomeMediaLtMd: `(max-width: ${breakpoints.bluxomeBreakpointLtMd})`,
   bluxomeMediaLtLg: `(max-width: ${breakpoints.bluxomeBreakpointLtLg})`,
   bluxomeMediaLtXlg: `(max-width: ${breakpoints.bluxomeBreakpointLtXlg})`,
+  'media-md': `(min-width: ${breakpoints.bluxomeBreakpointMd})`,
+  'media-lg': `(min-width: ${breakpoints.bluxomeBreakpointLg})`,
+  'media-xlg': `(min-width: ${breakpoints.bluxomeBreakpointXlg})`,
+  'media-lt-md': `(max-width: ${breakpoints.bluxomeBreakpointLtMd})`,
+  'media-lt-lg': `(max-width: ${breakpoints.bluxomeBreakpointLtLg})`,
+  'media-lt-xlg': `(max-width: ${breakpoints.bluxomeBreakpointLtXlg})`,
 }
 
 module.exports = (_opts = {}) => {
@@ -58,7 +64,9 @@ module.exports = (_opts = {}) => {
             return
           }
           const params = atRule.params.trim()
-          if (!Object.values(mediaQueries).includes(params)) {
+          if (
+            !Object.keys(mediaQueries).some((key) => params === key || params === mediaQueries[key])
+          ) {
             return
           }
           // Create a fallback that duplicates the @media rule only if @container rules are not supported
