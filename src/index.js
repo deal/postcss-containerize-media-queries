@@ -17,18 +17,18 @@ const breakpoints = {
 }
 
 const mediaQueries = {
-  mBreakpointXs: `(min-width: ${breakpoints.breakpointXs})`,
-  mBreakpointSm: `(min-width: ${breakpoints.breakpointSm})`,
-  mBreakpointMd: `(min-width: ${breakpoints.breakpointMd})`,
-  mBreakpointLg: `(min-width: ${breakpoints.breakpointLg})`,
-  mBreakpointXlg: `(min-width: ${breakpoints.breakpointXlg})`,
-  mBreakpointXxlg: `(min-width: ${breakpoints.breakpointXxlg})`,
-  mBreakpointLtXs: `(max-width: ${parseInt(breakpoints.breakpointXs) - 1}px)`,
-  mBreakpointLtSm: `(max-width: ${parseInt(breakpoints.breakpointSm) - 1}px)`,
-  mBreakpointLtMd: `(max-width: ${parseInt(breakpoints.breakpointMd) - 1}px)`,
-  mBreakpointLtLg: `(max-width: ${parseInt(breakpoints.breakpointLg) - 1}px)`,
-  mBreakpointLtXlg: `(max-width: ${parseInt(breakpoints.breakpointXlg) - 1}px)`,
-  mBreakpointLtXxlg: `(max-width: ${parseInt(breakpoints.breakpointXxlg) - 1}px)`,
+  breakpointXs: `(min-width: ${breakpoints.breakpointXs})`,
+  breakpointSm: `(min-width: ${breakpoints.breakpointSm})`,
+  breakpointMd: `(min-width: ${breakpoints.breakpointMd})`,
+  breakpointLg: `(min-width: ${breakpoints.breakpointLg})`,
+  breakpointXlg: `(min-width: ${breakpoints.breakpointXlg})`,
+  breakpointXxlg: `(min-width: ${breakpoints.breakpointXxlg})`,
+  breakpointLtXs: `(max-width: ${parseInt(breakpoints.breakpointXs) - 1}px)`,
+  breakpointLtSm: `(max-width: ${parseInt(breakpoints.breakpointSm) - 1}px)`,
+  breakpointLtMd: `(max-width: ${parseInt(breakpoints.breakpointMd) - 1}px)`,
+  breakpointLtLg: `(max-width: ${parseInt(breakpoints.breakpointLg) - 1}px)`,
+  breakpointLtXlg: `(max-width: ${parseInt(breakpoints.breakpointXlg) - 1}px)`,
+  breakpointLtXxlg: `(max-width: ${parseInt(breakpoints.breakpointXxlg) - 1}px)`,
   bluxomeMediaMd: `(min-width: ${breakpoints.bluxomeBreakpointMd})`,
   bluxomeMediaLg: `(min-width: ${breakpoints.bluxomeBreakpointLg})`,
   bluxomeMediaXlg: `(min-width: ${breakpoints.bluxomeBreakpointXlg})`,
@@ -43,53 +43,46 @@ const mediaQueries = {
   'media-lt-xlg': `(max-width: ${breakpoints.bluxomeBreakpointLtXlg})`,
 }
 
+const processed = Symbol('processed')
+
 module.exports = (_opts = {}) => {
   return {
     postcssPlugin: 'postcss-containerize-media-queries',
     prepare() {
-      const transformedAtRules = new WeakSet()
       return {
-        postcssPlugin: this.postcssPlugin,
-        AtRule: (atRule) => {
-          if (transformedAtRules.has(atRule)) {
-            return
-          }
-          if (atRule.name.toLowerCase() !== 'media') {
-            return
-          }
-          const parent = atRule.parent
-          if (
-            !parent ||
-            (parent.name === 'supports' && parent.params === 'not (contain: inline-size)')
-          ) {
-            return
-          }
-          const params = atRule.params.trim()
-          const containerRuleParams = Object.entries(mediaQueries)
-            .find(([key, value]) => {
-              return params === value || params.includes(key) || params.includes(snakeCase(key))
+        OnceExit(css) {
+          css.walkAtRules(/media/i, (atRule) => {
+            if (atRule[processed] || atRule.parent[processed]) {
+              // Avoid infinite loop by ignoring rules added by this plugin
+              return
+            }
+            const params = atRule.params.trim()
+            const mediaQueryEntry = Object.entries(mediaQueries).find(([alias, value]) => {
+              return params === value || params.includes(alias) || params.includes(snakeCase(alias))
             })
-            ?.at(1)
-          if (!containerRuleParams) {
-            return
-          }
-          transformedAtRules.add(atRule)
-          // Create a fallback @supports rule that wraps the original @media rule
-          const fallbackRule = postcss.atRule({
-            name: 'supports',
-            params: 'not (contain: inline-size)',
-          })
-          fallbackRule.append(atRule.clone())
-          // Create a @container rule to replace the @media rule
-          const containerRule = postcss.atRule({
-            name: 'container',
-            params: containerRuleParams,
-          })
-          containerRule.append(atRule.nodes)
+            const mediaQuery = mediaQueryEntry && mediaQueryEntry[1]
+            if (!mediaQuery) {
+              // Ignore if rule's media query isn't one of our standard ones
+              return
+            }
+            // Create a fallback @supports rule that wraps the original @media rule
+            const fallbackRule = postcss
+              .atRule({
+                name: 'supports',
+                params: 'not (contain: inline-size)',
+              })
+              .append(atRule.clone({ params: mediaQuery, raws: { before: '\n' } }))
+            // Create a @container rule to replace the @media rule
+            const containerRule = atRule.clone({ name: 'container', params: mediaQuery })
 
-          parent.insertAfter(atRule, fallbackRule)
-          parent.insertAfter(fallbackRule, containerRule)
-          atRule.remove()
+            atRule[processed] = true
+            fallbackRule[processed] = true
+            containerRule[processed] = true
+
+            atRule.parent.insertAfter(atRule, fallbackRule)
+            atRule.parent.insertAfter(fallbackRule, containerRule)
+            atRule.remove()
+          })
         },
       }
     },
