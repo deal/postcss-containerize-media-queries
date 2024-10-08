@@ -45,7 +45,7 @@ const mediaQueries = {
 
 const processed = Symbol('processed')
 
-module.exports = (_opts = {}) => {
+module.exports = (opts = { replaceVwUnit: false }) => {
   return {
     postcssPlugin: 'postcss-containerize-media-queries',
     prepare() {
@@ -73,7 +73,11 @@ module.exports = (_opts = {}) => {
               })
               .append(atRule.clone({ params: mediaQuery, raws: { before: '\n' } }))
             // Create a @container rule to replace the @media rule
-            const containerRule = atRule.clone({ name: 'container', params: mediaQuery })
+            const containerRule = atRule.clone({
+              name: 'container',
+              params: mediaQuery,
+              nodes: opts.replaceVwUnit ? transformNodes(atRule.nodes) : atRule.nodes,
+            })
 
             atRule[processed] = true
             fallbackRule[processed] = true
@@ -90,3 +94,36 @@ module.exports = (_opts = {}) => {
 }
 
 module.exports.postcss = true
+
+/**
+ * Replaces the `vw` unit with the `cqi` unit in width declarations.
+ */
+function transformNodes(nodes) {
+  nodes.forEach((node, i) => {
+    if (isTransformableWidthDeclaration(node)) {
+      nodes[i] = node.clone({ value: getTransformedNodeValue(node) })
+      return
+    }
+    if (node.type === 'rule' && node.nodes.some(isTransformableWidthDeclaration)) {
+      nodes[i].nodes = transformNodes(node.nodes)
+      return
+    }
+  })
+  return nodes
+}
+
+function isTransformableWidthDeclaration(node) {
+  return (
+    node.type === 'decl' &&
+    ['width', 'max-width', 'min-width'].includes(node.prop) &&
+    node.value.includes('vw')
+  )
+}
+
+function getTransformedNodeValue(node) {
+  let newValue = node.value.slice()
+  newValue = newValue.replace(/svw/g, 'cqi')
+  newValue = newValue.replace(/dvw/g, 'cqi')
+  newValue = newValue.replace(/vw/g, 'cqi')
+  return newValue
+}
