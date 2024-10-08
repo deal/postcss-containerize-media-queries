@@ -45,7 +45,7 @@ const mediaQueries = {
 
 const processed = Symbol('processed')
 
-module.exports = (_opts = {}) => {
+module.exports = (opts = { replaceVwUnit: false }) => {
   return {
     postcssPlugin: 'postcss-containerize-media-queries',
     prepare() {
@@ -76,7 +76,7 @@ module.exports = (_opts = {}) => {
             const containerRule = atRule.clone({
               name: 'container',
               params: mediaQuery,
-              nodes: transformNodes(atRule.nodes),
+              nodes: opts.replaceVwUnit ? transformNodes(atRule.nodes) : atRule.nodes,
             })
 
             atRule[processed] = true
