@@ -58,7 +58,11 @@ module.exports = (opts = { replaceVwUnit: false }) => {
             }
             const params = atRule.params.trim()
             const mediaQueryEntry = Object.entries(mediaQueries).find(([alias, value]) => {
-              return params === value || params.includes(alias) || params.includes(snakeCase(alias))
+              return (
+                params === value ||
+                params.toLowerCase().includes(alias.toLowerCase()) ||
+                params.includes(snakeCase(alias))
+              )
             })
             const mediaQuery = mediaQueryEntry && mediaQueryEntry[1]
             if (!mediaQuery) {
