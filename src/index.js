@@ -112,7 +112,7 @@ module.exports.postcss = true
 /**
  * Replaces the `vw` unit with the `cqi` unit in width and custom variable declarations
  *
- * Only for use within @container rules because the original, `vw`-based declaration is __not__ preserved
+ * Only for use within @container rules because the original, `vw`-based declaration is _not_ preserved
  *
  */
 function replaceVwDeclValuesWithCqi(nodes) {
