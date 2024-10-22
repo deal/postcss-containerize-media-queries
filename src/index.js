@@ -55,9 +55,9 @@ module.exports = (opts = { replaceVwUnit: false }) => {
             /**
              * Duplicate any declarations that use the `vw` unit, unless they are nested in a @media/@container rule
              *
-             * Preserves the original, `vw`-based declaration because `cqi` may or may not be supported
+             * Preserves the original, `vw`-based declaration because the cloned, `cqi`-based declaration may be ignored if unsupported
              */
-            node.cloneAfter({ value: getTransformedVwDeclValue(node) })
+            node.cloneAfter({ value: getVwDeclValueAsCqi(node) })
           }
         },
         OnceExit(css) {
@@ -90,7 +90,7 @@ module.exports = (opts = { replaceVwUnit: false }) => {
             const containerRule = atRule.clone({
               name: 'container',
               params: mediaQuery,
-              nodes: opts.replaceVwUnit ? transformNodes(atRule.nodes) : atRule.nodes,
+              nodes: opts.replaceVwUnit ? replaceVwDeclValuesWithCqi(atRule.nodes) : atRule.nodes,
             })
 
             atRule[processed] = true
@@ -115,14 +115,14 @@ module.exports.postcss = true
  * Only for use within @container rules because the original, `vw`-based declaration is __not__ preserved
  *
  */
-function transformNodes(nodes) {
+function replaceVwDeclValuesWithCqi(nodes) {
   nodes.forEach((node, i) => {
     if (isTransformableVwDecl(node)) {
-      nodes[i] = node.clone({ value: getTransformedVwDeclValue(node) })
+      nodes[i] = node.clone({ value: getVwDeclValueAsCqi(node) })
       return
     }
     if (node.type === 'rule' && node.nodes.some(isTransformableVwDecl)) {
-      nodes[i].nodes = transformNodes(node.nodes)
+      nodes[i].nodes = replaceVwDeclValuesWithCqi(node.nodes)
       return
     }
   })
@@ -130,7 +130,7 @@ function transformNodes(nodes) {
 }
 
 /**
- * Checks whether the node is nested in an @media or @container rule
+ * Checks whether the node is nested in an @media or @container rule by recursively walking the node's parents
  */
 function isNestedInAtRule(node) {
   if (!node.parent || node.parent.type === 'root') {
@@ -146,15 +146,15 @@ function isNestedInAtRule(node) {
  * Checks whether the node is a width or custom variable declaration that includes the `vw` unit
  */
 function isTransformableVwDecl(node) {
-  if (node.type === 'decl' && node.prop) {
+  if (node.type === 'decl' && node.prop && node.value) {
     if (['width', 'max-width', 'min-width'].includes(node.prop) || node.prop.startsWith('--')) {
-      return !!node.value?.includes('vw')
+      return node.value.includes('vw')
     }
   }
   return false
 }
 
-function getTransformedVwDeclValue(node) {
+function getVwDeclValueAsCqi(node) {
   let newValue = node.value.slice()
   newValue = newValue.replace(/svw/g, 'cqi')
   newValue = newValue.replace(/dvw/g, 'cqi')
